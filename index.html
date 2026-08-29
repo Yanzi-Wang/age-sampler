@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AGE-Sampler: Adaptive-granularity Graph-enhanced Event Sampling for Long-Video Understanding</title>
+  <meta name="description" content="AGE-Sampler: a training-free, plug-and-play keyframe selection framework for long-video understanding. Accepted to EMNLP 2026." />
+
+  <!-- Social / preview cards -->
+  <meta property="og:title" content="AGE-Sampler (EMNLP 2026)" />
+  <meta property="og:description" content="Training-free, plug-and-play keyframe selection for long-video understanding." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="static/images/pipeline.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <div class="container">
+      <span class="badge">EMNLP 2026 · Main Conference</span>
+
+      <h1 class="title">
+        <span class="kw">AGE-Sampler</span>: Adaptive-granularity Graph-enhanced
+        Event Sampling for Long-Video Understanding
+      </h1>
+
+      <p class="subtitle">
+        Training-free, plug-and-play keyframe selection that helps large
+        vision&ndash;language models see the right frames in long videos &mdash;
+        without any extra LVLM calls.
+      </p>
+
+      <p class="authors">
+        <a href="mailto:wangyanzi0314@gmail.com">Yanzi Wang</a><sup>1</sup>,
+        <a href="mailto:daitao.edu@gmail.com">Tao Dai</a><sup>2,&#9993;</sup>,
+        <a href="mailto:zyh1614399882@gmail.com">Yaohua Zha</a><sup>1</sup>,
+        <a href="mailto:xiast@sz.tsinghua.edu.cn">Shu-Tao Xia</a><sup>1</sup>
+      </p>
+      <p class="affiliations">
+        <sup>1</sup>Tsinghua Shenzhen International Graduate School, Tsinghua University &nbsp;&nbsp;
+        <sup>2</sup>College of Computer Science and Software Engineering, Shenzhen University
+      </p>
+      <p class="corresp">&#9993; Corresponding author</p>
+
+      <!-- ===================== LINK BUTTONS ===================== -->
+      <nav class="links">
+        <!-- Replace # with the arXiv URL once available -->
+        <a class="btn disabled" href="#" title="arXiv link coming soon">
+          <span class="ico">&#128196;</span> arXiv
+        </a>
+        <a class="btn" href="static/AGE-Sampler-paper.pdf" target="_blank" rel="noopener">
+          <span class="ico">&#128459;</span> Paper (PDF)
+        </a>
+        <a class="btn" href="https://github.com/Yanzi-Wang/AGE-Sampler-Adaptive-granularity-Graph-enhanced-Event-Sampling-for-Long-Video-Understanding" target="_blank" rel="noopener">
+          <span class="ico">&#128187;</span> Code
+        </a>
+        <a class="btn" href="#bibtex-section">
+          <span class="ico">&#128278;</span> BibTeX
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===================== TEASER / MOTIVATION ===================== -->
+  <section id="teaser">
+    <div class="container">
+      <figure class="teaser">
+        <img src="static/images/motivation.png" alt="Motivation figure" style="max-width:560px;" />
+        <figcaption>
+          <b>Motivation.</b> For the query <i>&ldquo;What did the blogger do next
+          after firing the ceramics?&rdquo;</i>:
+          <b>(a)</b> coarse query&ndash;frame similarity yields over-large segments
+          where the key event is lost;
+          <b>(b)</b> fine-grained visual scene cuts help, but pure similarity
+          matching still misses inherently relevant frames (e.g.&nbsp;<i>painting</i>);
+          <b>(c)</b> AGE-Sampler propagates importance over an event graph to
+          recover latent contextual events.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== ABSTRACT ===================== -->
+  <section id="abstract">
+    <div class="container">
+      <h2 class="section-title">Abstract</h2>
+      <div class="prose">
+        <p>
+          Informative keyframe selection is critical for applying large
+          vision&ndash;language models (LVLMs) to long-form video understanding
+          under limited frame budgets. However, existing methods heavily rely on
+          query&ndash;frame similarity, which can yield coarse event boundaries
+          and miss latent contextual events that are answer-relevant but not
+          explicitly mentioned in the query.
+        </p>
+        <p>
+          To address this issue, we propose <b>AGE-Sampler</b>, a training-free
+          <b>A</b>daptive-granularity <b>G</b>raph-enhanced <b>E</b>vent sampling
+          framework for long-video understanding. AGE-Sampler jointly exploits
+          low-level visual transition cues and query-relevance signals to
+          construct query-adaptive events, preserving fine-grained structures in
+          relevant regions while merging low-relevance regions into compact
+          intervals. To recover answer-bearing contextual evidence, we further
+          develop a fine-grained event graph and propagate importance from
+          high-confidence query-relevant anchors via Personalized PageRank,
+          followed by event-level budget allocation and representative keyframe
+          selection.
+        </p>
+        <p>
+          Extensive experiments with different LVLM backbones show that
+          AGE-Sampler consistently improves long-video understanding, achieving
+          average absolute gains of <b>+6.2% on LongVideoBench</b>,
+          <b>+8.8% on MLVU</b>, and <b>+3.8% on Video-MME</b>, while remaining
+          lightweight and plug-and-play.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== METHOD ===================== -->
+  <section id="method">
+    <div class="container">
+      <h2 class="section-title">Method</h2>
+      <figure>
+        <img src="static/images/pipeline.png" alt="AGE-Sampler pipeline overview" />
+        <figcaption>
+          <b>Overview of AGE-Sampler.</b> Given a frame sequence and a query, we
+          compute frame&ndash;query relevance and visual-transition signals to
+          construct query-gated fine-grained event candidates. An event graph is
+          then built, where Personalized PageRank (PPR) propagates importance from
+          query-relevant anchors to latent contextual events. The graph-refined
+          scores guide adaptive merging, and the final event structure drives
+          event-level budget allocation and representative keyframe selection for
+          LVLM inference.
+        </figcaption>
+      </figure>
+
+      <div class="modules">
+        <div class="module">
+          <span class="step">1</span>
+          <h3>Query-gated event segmentation</h3>
+          <p>
+            Fuse low-level visual transitions with query-relevance scores to build
+            fine-grained event candidates &mdash; keeping detail where the query
+            needs it, collapsing background elsewhere.
+          </p>
+        </div>
+        <div class="module">
+          <span class="step">2</span>
+          <h3>Graph-enhanced reweighting</h3>
+          <p>
+            Build a temporal + visual event graph and propagate importance from
+            high-confidence anchors via Personalized PageRank, resurfacing latent
+            contextual events <i>before</i> merging.
+          </p>
+        </div>
+        <div class="module">
+          <span class="step">3</span>
+          <h3>Adaptive sampling</h3>
+          <p>
+            Merge low-relevance regions, allocate the frame budget across the
+            refined event structure, and select representative keyframes within
+            each event using a localized MMR criterion.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section id="results">
+    <div class="container">
+      <h2 class="section-title">Results</h2>
+
+      <div class="stats">
+        <div class="stat"><div class="num">+6.2</div><div class="lab">avg. gain on LongVideoBench</div></div>
+        <div class="stat"><div class="num">+8.8</div><div class="lab">avg. gain on MLVU</div></div>
+        <div class="stat"><div class="num">+3.8</div><div class="lab">avg. gain on Video-MME</div></div>
+        <div class="stat"><div class="num">37.3&times;</div><div class="lab">faster than A.I.R. at sampling</div></div>
+      </div>
+
+      <p class="prose" style="margin-top:32px;">
+        AGE-Sampler consistently improves LVLM accuracy across four backbones
+        (LLaVA-OneVision-7B, Qwen2.5-VL-7B, MiniCPM-V2.6, InternVL3-8B) and three
+        long-video QA benchmarks, while adding only one LVLM call per question and
+        negligible extra GPU memory.
+      </p>
+
+      <div class="bars">
+        <figure>
+          <img src="static/images/bar_lvb.png" alt="Results on LongVideoBench" />
+          <figcaption style="text-align:center;">LongVideoBench</figcaption>
+        </figure>
+        <figure>
+          <img src="static/images/bar_mlvu.png" alt="Results on MLVU" />
+          <figcaption style="text-align:center;">MLVU</figcaption>
+        </figure>
+        <figure>
+          <img src="static/images/bar_videomme.png" alt="Results on Video-MME" />
+          <figcaption style="text-align:center;">Video-MME</figcaption>
+        </figure>
+      </div>
+
+      <h3 style="text-align:center; font-family:var(--serif); margin:40px 0 10px;">
+        Main comparison (accuracy %)
+      </h3>
+      <div class="table-wrap">
+        <table class="results">
+          <thead>
+            <tr>
+              <th rowspan="2">Model</th>
+              <th rowspan="2">Method</th>
+              <th rowspan="2">Frames</th>
+              <th colspan="3">LongVideoBench</th>
+              <th colspan="3">MLVU</th>
+              <th colspan="3">Video-MME</th>
+            </tr>
+            <tr>
+              <th>Base</th><th>+Method</th><th>&Delta;</th>
+              <th>Base</th><th>+Method</th><th>&Delta;</th>
+              <th>Base</th><th>+Method</th><th>&Delta;</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- LLaVA-OV -->
+            <tr class="grp"><td class="model" rowspan="5">LLaVA-OV<br>(7B)</td><td class="method">BOLT*</td><td>32</td><td>56.4</td><td>59.6</td><td>+3.2</td><td>63.2</td><td>66.8</td><td>+3.6</td><td>58.5</td><td>59.9</td><td>+1.4</td></tr>
+            <tr><td class="method">AKS*</td><td>32</td><td>54.8</td><td>59.3</td><td class="second">+4.5</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>56.5</td><td>58.4</td><td>+1.9</td></tr>
+            <tr><td class="method">A.I.R.*<sup>&sect;</sup></td><td>32</td><td>58.5</td><td class="second">60.7</td><td>+2.2</td><td>62.4</td><td class="best">69.3</td><td class="best">+6.9</td><td>58.3</td><td class="second">61.4</td><td class="second">+3.1</td></tr>
+            <tr><td class="method">MDP&sup3;</td><td>32</td><td>56.3</td><td>59.5</td><td>+3.2</td><td>62.1</td><td>68.2</td><td>+6.1</td><td>58.0</td><td>59.9</td><td>+1.9</td></tr>
+            <tr class="ours"><td class="method">Ours</td><td>32</td><td>56.3</td><td class="best">61.8</td><td class="best">+5.5</td><td>62.1</td><td class="second">68.9</td><td class="second">+6.8</td><td>58.0</td><td class="best">61.7</td><td class="best">+3.7</td></tr>
+
+            <!-- Qwen2.5-VL -->
+            <tr class="grp"><td class="model" rowspan="5">Qwen2.5-VL<br>(7B)</td><td class="method">AKS*</td><td>32</td><td>58.9</td><td>63.2</td><td>+4.3</td><td>59.7</td><td>67.2</td><td>+7.5</td><td>61.2</td><td>64.0</td><td>+2.8</td></tr>
+            <tr><td class="method">A.I.R.*<sup>&sect;</sup></td><td>32</td><td>58.1</td><td>61.4</td><td>+3.3</td><td>59.3</td><td>67.5</td><td>+8.2</td><td>60.8</td><td class="best">65.0</td><td class="best">+4.2</td></tr>
+            <tr><td class="method">MDP&sup3;</td><td>32</td><td>58.5</td><td>59.5</td><td>+1.0</td><td>59.4</td><td>66.1</td><td>+6.7</td><td>61.1</td><td>63.2</td><td>+2.1</td></tr>
+            <tr><td class="method">WFS</td><td>32</td><td>58.5</td><td class="second">64.4</td><td class="second">+5.9</td><td>59.4</td><td class="second">69.5</td><td class="second">+10.1</td><td>61.1</td><td>64.2</td><td>+3.1</td></tr>
+            <tr class="ours"><td class="method">Ours</td><td>32</td><td>58.5</td><td class="best">64.9</td><td class="best">+6.4</td><td>59.4</td><td class="best">69.9</td><td class="best">+10.5</td><td>61.1</td><td class="second">64.5</td><td class="second">+3.4</td></tr>
+
+            <!-- MiniCPM -->
+            <tr class="grp"><td class="model" rowspan="3">MiniCPM-V2.6<br>(7B)</td><td class="method">MDP&sup3;</td><td>8</td><td>51.6</td><td>57.3</td><td>+5.7</td><td>51.6</td><td>62.2</td><td>+10.6</td><td>52.8</td><td class="second">58.0</td><td class="second">+5.2</td></tr>
+            <tr><td class="method">WFS</td><td>8</td><td>51.6</td><td class="second">58.6</td><td class="second">+7.0</td><td>51.6</td><td class="best">62.6</td><td class="best">+11.0</td><td>52.8</td><td>57.9</td><td>+5.1</td></tr>
+            <tr class="ours"><td class="method">Ours</td><td>8</td><td>51.6</td><td class="best">59.0</td><td class="best">+7.4</td><td>51.6</td><td class="second">62.5</td><td class="second">+10.9</td><td>52.8</td><td class="best">58.5</td><td class="best">+5.7</td></tr>
+
+            <!-- InternVL-3 -->
+            <tr class="grp"><td class="model" rowspan="5">InternVL3<br>(8B)</td><td class="method">AKS*</td><td>32</td><td>58.5</td><td>61.5</td><td>+3.0</td><td>68.4</td><td>74.2</td><td>+5.8</td><td>65.6</td><td>66.3</td><td>+0.7</td></tr>
+            <tr><td class="method">A.I.R.*<sup>&sect;</sup></td><td>32</td><td>58.3</td><td class="second">62.8</td><td class="second">+4.5</td><td>68.4</td><td class="second">74.5</td><td class="second">+6.1</td><td>65.6</td><td class="best">68.2</td><td class="best">+2.6</td></tr>
+            <tr><td class="method">MDP&sup3;</td><td>32</td><td>58.3</td><td>60.4</td><td>+2.1</td><td>68.3</td><td>73.6</td><td>+5.3</td><td>65.1</td><td>66.8</td><td>+1.7</td></tr>
+            <tr><td class="method">WFS</td><td>32</td><td>58.3</td><td>62.5</td><td>+4.2</td><td>68.3</td><td>74.3</td><td>+6.0</td><td>65.1</td><td>67.1</td><td>+2.0</td></tr>
+            <tr class="ours"><td class="method">Ours</td><td>32</td><td>58.3</td><td class="best">63.9</td><td class="best">+5.6</td><td>68.3</td><td class="best">75.1</td><td class="best">+6.8</td><td>65.1</td><td class="second">67.6</td><td class="second">+2.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        &ldquo;Base&rdquo; denotes uniform frame sampling; &ldquo;+Method&rdquo;
+        applies the corresponding keyframe selector; &Delta; is the absolute gain
+        over the row&rsquo;s base. Rows without a marker are reproduced under a
+        single shared protocol; * rows are quoted from the original papers with
+        their own base (so their &Delta; is indicative, not controlled).
+        <sup>&sect;</sup> marks an LVLM-dependent iterative method.
+        <b>Bold</b> = best, <u>underline</u> = second-best per model&ndash;benchmark group.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== BIBTEX ===================== -->
+  <section id="bibtex-section">
+    <div class="container">
+      <h2 class="section-title">BibTeX</h2>
+      <div class="copy-row">
+        <button class="copy-btn" id="copy-bibtex">Copy</button>
+      </div>
+      <pre class="bibtex" id="bibtex">@inproceedings{wang2026agesampler,
+  title     = {AGE-Sampler: Adaptive-granularity Graph-enhanced Event
+               Sampling for Long-Video Understanding},
+  author    = {Wang, Yanzi and Dai, Tao and Zha, Yaohua and Xia, Shu-Tao},
+  booktitle = {Proceedings of the 2026 Conference on Empirical Methods
+               in Natural Language Processing (EMNLP)},
+  year      = {2026}
+}</pre>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="container">
+      <p>
+        Questions? Please
+        <a href="https://github.com/Yanzi-Wang/AGE-Sampler-Adaptive-granularity-Graph-enhanced-Event-Sampling-for-Long-Video-Understanding/issues" target="_blank" rel="noopener">open an issue</a>.
+      </p>
+      <p style="margin-top:6px;">
+        Website template adapted from the
+        <a href="https://github.com/nerfies/nerfies.github.io" target="_blank" rel="noopener">Nerfies</a> project page.
+      </p>
+    </div>
+  </footer>
+
+  <script src="static/js/index.js"></script>
+</body>
+</html>
